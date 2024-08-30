@@ -26,6 +26,13 @@ class ArgParse:
             formatter_class=CustomFormatter
         )
 
+        parser.add_argument(
+            "--debug",
+            dest="debug",
+            action="store_true",
+            help="debug mode (not default)",
+        )
+
         # dataset
         parser.add_argument(
             "-r",
@@ -223,6 +230,13 @@ class ArgParse:
             type=str,
             default="./tf_logs/",
             help="dir to TensorBoard log files.",
+        )
+        parser.add_argument(
+            "-ck"
+            "--comet_exp_key",
+            type=str,
+            default=None,
+            help="comet experiment key to resume from.",
         )
 
         # checkpoint files

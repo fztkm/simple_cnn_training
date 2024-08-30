@@ -1,14 +1,15 @@
-from typing import Tuple
-from datetime import datetime
+from typing import Optional, List, Tuple
 
 from comet_ml import Experiment
 from lightning.pytorch.loggers import CometLogger
 
 
-def configure_logger_pl(
-        model_name: str,
+def configure_logger(
         disable_logging: bool,
         save_dir: str,
+        exp_name: str,
+        tags: List,
+        existing_exp_key: Optional[str] = None,
 ) -> Tuple[Experiment, str]:
     """comet logger factory
 
@@ -21,9 +22,8 @@ def configure_logger_pl(
         comet_ml.Experiment: logger
         str: experiment name of comet.ml
     """
-
-    exp_name = datetime.now().strftime("%Y-%m-%d_%H:%M:%S:%f")
-    exp_name = exp_name.replace(" ", "_")
+    if existing_exp_key:
+        exp_name, tags = None, None
 
     # Use ./.comet.config and ~/.comet.config
     # to specify API key, workspace and project name.
@@ -34,6 +34,8 @@ def configure_logger_pl(
         parse_args=True,
         disabled=disable_logging,
     )
-    comet_logger.experiment.add_tag(model_name)
+
+    if tags:
+        comet_logger.experiment.add_tags(tags)
 
     return comet_logger, exp_name

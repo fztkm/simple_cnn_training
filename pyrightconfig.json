@@ -1,0 +1,9 @@
+{
+    "exclude": [
+        "comet_logs/**",
+        ".hypothesis",
+        ".pytest_cache",
+        "dataset/**",
+        ".git/",
+    ]
+}
