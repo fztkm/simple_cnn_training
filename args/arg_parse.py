@@ -77,7 +77,7 @@ class ArgParse:
             "--model_name",
             type=str,
             default="resnet18",
-            choices=["resnet18", "resnet50", "x3d", "abn_r50", "vit_b", "zero_output_dummy"],
+            choices=["resnet18", "resnet50", "vit_b"],
             help="name of the model",
         )
 

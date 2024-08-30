@@ -3,13 +3,13 @@ import os
 from model import (
     ClassificationBaseModel,
     ModelConfig,
-    ResNet50,
-    ResNet18,
-    ABNResNet50,
-    X3DM,
-    ViTb,
-    ZeroOutputModel,
 )
+
+from model.resnet import (
+    ResNet18,
+    ResNet50,
+)
+from model.vit import ViTb
 
 
 def set_torch_home(
@@ -45,17 +45,8 @@ def configure_model(
     elif model_info.model_name == 'resnet50':
         model = ResNet50(model_info)  # type: ignore[assignment]
 
-    elif model_info.model_name == 'abn_r50':
-        model = ABNResNet50(model_info)  # type: ignore[assignment]
-
     elif model_info.model_name == 'vit_b':
         model = ViTb(model_info)  # type: ignore[assignment]
-
-    elif model_info.model_name == 'x3d':
-        model = X3DM(model_info)  # type: ignore[assignment]
-
-    elif model_info.model_name == 'zero_output_dummy':
-        model = ZeroOutputModel(model_info)  # type: ignore[assignment]
 
     else:
         raise ValueError('invalid model_info.model_name')
