@@ -72,17 +72,24 @@ def main():
             logger=loggers,
             log_every_n_steps=args.log_interval_steps,
             accumulate_grad_batches=args.grad_accum,
-            limit_train_batches=15,  # only for debug
-            limit_val_batches=15,  # only for debug
+            limit_train_batches=800,  # only for debug
+            limit_val_batches=20,  # only for debug
             callbacks=callbacks,
             plugins=[TorchSyncBatchNorm()],
         )
 
-    trainer.fit(
-        model=model_lightning,
-        datamodule=data_module,
-        ckpt_path=args.checkpoint_to_resume,
-    )
+    if args.val_only:
+        trainer.validate(
+            model=model_lightning,
+            datamodule=data_module,
+            ckpt_path=args.checkpoint_to_resume,
+        )
+    else:
+        trainer.fit(
+            model=model_lightning,
+            datamodule=data_module,
+            ckpt_path=args.checkpoint_to_resume,
+        )
 
 
 if __name__ == "__main__":

@@ -32,6 +32,11 @@ class ArgParse:
             action="store_true",
             help="debug mode (not default)",
         )
+        parser.add_argument(
+            "--val_only",
+            dest="val_only",
+            action="store_true",
+        )
 
         # dataset
         parser.add_argument(
@@ -77,7 +82,7 @@ class ArgParse:
             "--model_name",
             type=str,
             default="resnet18",
-            choices=["resnet18", "resnet50", "vit_b"],
+            choices=["resnet18", "resnet50", "vit_b", "clip"],
             help="name of the model",
         )
 
@@ -235,6 +240,7 @@ class ArgParse:
             "-ck"
             "--comet_exp_key",
             type=str,
+            dest="comet_exp_key",
             default=None,
             help="comet experiment key to resume from.",
         )
