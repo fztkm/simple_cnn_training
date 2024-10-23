@@ -4,11 +4,45 @@ import os
 
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint
+from torch.optim.lr_scheduler import LambdaLR
 
 
-from utils import compute_topk_accuracy
+from utils import compute_topk_accuracy, log_params_on_step
 from model import configure_model, ModelConfig
-from setup import configure_optimizer, configure_scheduler
+from setup import (
+    configure_optimizer,
+    configure_warmup_cosine_decay_lambda,
+    configure_constant_lambda,
+)
+
+
+def get_grouped_params(
+    model,
+    no_decay=["bias", "LayerNorm.weight", "layer_norm.weight"],
+    head=["classifier"],
+    base_lr=1e-5,
+    head_lr=1e-2,
+    weight_decay=5e-4,
+):
+    base_params_with_wd, base_params_without_wd = [], []
+    head_params_with_wd, head_params_without_wd = [], []
+    for n, p in model.named_parameters():
+        if any(nd in n for nd in head):
+            if any(nd in n for nd in no_decay):
+                head_params_without_wd.append(p)
+            else:
+                head_params_with_wd.append(p)
+        elif any(nd in n for nd in no_decay):
+            base_params_without_wd.append(p)
+        else:
+            base_params_with_wd.append(p)
+
+    return [
+        {"params": base_params_with_wd, "weight_decay": weight_decay, "lr": base_lr},
+        {"params": base_params_without_wd, "weight_decay": 0.0, "lr": base_lr},
+        {"params": head_params_with_wd, "weight_decay": weight_decay, "lr": head_lr},
+        {"params": head_params_without_wd, "weight_decay": 0.0, "lr": head_lr},
+    ]
 
 
 class SimpleLightningModel(pl.LightningModule):
@@ -27,6 +61,7 @@ class SimpleLightningModel(pl.LightningModule):
             command_line_args: argparse.Namespace,
             n_classes: int,
             exp_name: str,
+            warmup_rate: float = 0.1,
     ):
         """constructor
 
@@ -41,6 +76,9 @@ class SimpleLightningModel(pl.LightningModule):
         super().__init__()
         self.args = command_line_args
         self.exp_name = exp_name
+        self.warmup_rate = warmup_rate
+        self.current_step_for_scheduler = 0
+
 
         self.model = configure_model(ModelConfig(
             model_name=self.args.model_name,
@@ -56,20 +94,33 @@ class SimpleLightningModel(pl.LightningModule):
         """see
         https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers
         """
-
         optimizer = configure_optimizer(
             optimizer_name=self.args.optimizer_name,
             lr=self.args.lr,
             weight_decay=self.args.weight_decay,
             momentum=self.args.momentum,
-            model_params=self.model.parameters()
+            # model_params=self.model.parameters()
+            model_params=get_grouped_params(self.model, base_lr=self.args.lr)
         )
-        scheduler = configure_scheduler(
-            optimizer=optimizer,
-            use_scheduler=self.args.use_scheduler
-        )
+        max_steps = self.trainer.estimated_stepping_batches
+        warmup_step = int(max_steps * self.warmup_rate)
+        backbone_lambda = configure_warmup_cosine_decay_lambda(max_steps, warmup_step)
+        head_lambda = configure_warmup_cosine_decay_lambda(max_steps, 0)
+        # head_lambda = configure_constant_lambda()
 
-        return {"optimizer": optimizer, "lr_scheduler": scheduler}
+        scheduler = LambdaLR(
+            optimizer,
+            lr_lambda=[backbone_lambda, backbone_lambda, head_lambda, head_lambda],)
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler":
+            {
+                "scheduler": scheduler,
+                "interval": "step",
+                "frequency": 1,
+            },
+        }
 
     def configure_callbacks(self):
         """see
@@ -121,6 +172,7 @@ class SimpleLightningModel(pl.LightningModule):
             batch_size=batch_size,
         )
 
+
     def training_step(self, batch, batch_idx):
         """a single training step for a batch
 
@@ -150,6 +202,11 @@ class SimpleLightningModel(pl.LightningModule):
 
         top1, top5, *_ = compute_topk_accuracy(outputs.logits, labels, topk=(1, 5))
         self.log_train_loss_top15(loss, top1, top5, batch_size)
+
+        log_params_on_step(self, {
+            "lr_backbone": self.trainer.optimizers[0].param_groups[0]["lr"],
+            "lr_head": self.trainer.optimizers[0].param_groups[2]["lr"],
+        }, batch_size)
 
         return loss
 

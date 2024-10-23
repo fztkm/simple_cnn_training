@@ -97,14 +97,19 @@ def transform_image(
     Returns:
         Tuple[torchvision.transforms]: train and val transforms
     """
-
+    mean = [0.45, 0.45, 0.45]
+    std = [0.225, 0.225, 0.225]
+    # mean = [0.48145466, 0.4578275, 0.40821073]
+    # std = [0.26862954, 0.26130258, 0.27577711]
+    # mean = [0.485, 0.456, 0.406]
+    # std = [0.229, 0.224, 0.225]
     train_transform = image_transform.Compose([
         image_transform.ToImage(),  # HWC ndarray --> CHW tensor (Image)
         image_transform.ToDtype(torch.float32, scale=True),  # [0,255] --> [0,1]
         image_transform.RandomResizedCrop(trans_image_info.crop_size, antialias=True),
         image_transform.RandomHorizontalFlip(),
         image_transform.Normalize(
-            [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+            mean, std
         ),
     ])
 
@@ -114,7 +119,7 @@ def transform_image(
         image_transform.Resize(trans_image_info.resize_size, antialias=True),
         image_transform.CenterCrop(trans_image_info.crop_size),
         image_transform.Normalize(
-            [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+            mean, std
         ),
     ])
 

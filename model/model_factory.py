@@ -1,5 +1,7 @@
 import os
 
+import torch
+
 from model import (
     ClassificationBaseModel,
     ModelConfig,
@@ -10,6 +12,7 @@ from model.resnet import (
     ResNet50,
 )
 from model.vit import ViTb
+from model.clip import CLIPImageClassifier
 
 
 def set_torch_home(
@@ -47,6 +50,9 @@ def configure_model(
 
     elif model_info.model_name == 'vit_b':
         model = ViTb(model_info)  # type: ignore[assignment]
+
+    elif model_info.model_name == 'clip':
+        model = CLIPImageClassifier(model_info)
 
     else:
         raise ValueError('invalid model_info.model_name')

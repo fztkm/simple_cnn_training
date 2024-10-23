@@ -14,7 +14,7 @@
             "justMyCode": false,
         },
         {
-            "name": "main.py 1GPU(0)",
+            "name": "main.py clip 1GPU(0)",
             "type": "debugpy",
             "request": "launch",
             "program": "main.py",
@@ -26,14 +26,15 @@
             },
             "justMyCode": false,
             "args": [
+                "--debug",
                 "-d",
                 "ImageFolder",
                 "-r",
-                "/mnt/NAS-TVS872XT/dataset-lab/Tiny-ImageNet/",
+                "/home/fukuzawa/dataset/places365/places365_standard/",
                 "-w",
                 "16",
                 "-b",
-                "64",
+                "4",
                 "-e",
                 "5",
                 "--optimizer",
@@ -41,6 +42,8 @@
                 "--log_interval_steps",
                 "10",
                 "--disable_comet",
+                "-m",
+                "clip",
                 // "--checkpoint_to_resume",
                 // "./log/epoch3_steps2344_acc70.51.pt"
             ]

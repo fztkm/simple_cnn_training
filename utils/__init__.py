@@ -9,6 +9,12 @@ from .checkpoint import (
     load_from_checkpoint,
 )
 from .tqdm_loss_topk import TqdmLossTopK
+from .pl_log_params import (
+    log_params_on_step_on_epoch,
+    log_params_on_step,
+    log_train_loss_top15,
+    log_val_loss_top15,
+)
 
 __all__ = [
     'AverageMeter',
@@ -17,5 +23,9 @@ __all__ = [
     'save_to_checkpoint',
     'save_to_comet',
     'load_from_checkpoint',
-    'TqdmLossTopK'
+    'TqdmLossTopK',
+    'log_params_on_step_on_epoch',
+    'log_params_on_step',
+    'log_train_loss_top15',
+    'log_val_loss_top15',
 ]

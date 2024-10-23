@@ -1,15 +1,17 @@
-from typing import Iterator, Literal
+from typing import Iterator, Literal, Union, TypeAlias, Dict, Any, Iterable
 
 from torch.nn.parameter import Parameter
 from torch.optim import Optimizer
 from torch.optim import SGD, Adam
+import torch
 
 SupportedOptimizers = Literal["SGD", "Adam"]
+ParamsT: TypeAlias = Union[Iterable[torch.Tensor], Iterable[Dict[str, Any]]]
 
 
 def configure_optimizer(
     optimizer_name: SupportedOptimizers,
-    model_params: Iterator[Parameter],
+    model_params: ParamsT,
     lr: float,
     weight_decay: float,
     momentum: float = 0.9,

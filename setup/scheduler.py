@@ -1,9 +1,23 @@
+from typing import List
+import math
+
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import (
     LRScheduler,
     StepLR,
     ConstantLR,
+    # ChainedScheduler,
 )
+from timm.scheduler.scheduler import Scheduler
+
+
+class MultiTimmScheduler(Scheduler):
+    def __init__(self, schedulers: List[Scheduler]) -> None:
+        self.schedulers = schedulers
+
+    def step(self, epoch: int, metric: float = None) -> None:
+        for scheduler in self.schedulers:
+            scheduler.step(epoch, metric)
 
 
 def configure_scheduler(
@@ -38,3 +52,21 @@ def dummy_scheduler(optimizer) -> LRScheduler:
         factor=1.0,
         total_iters=65535,  # dummy max
     )
+
+
+def configure_warmup_cosine_decay_lambda(total_steps, warmup_steps):
+    def warmup_cosine_decay_lambda(current_step):
+        if current_step < warmup_steps:
+            # Linear warm-up
+            return float(current_step) / float(max(1, warmup_steps))
+        else:
+            # Cosine decay
+            progress = float(current_step - warmup_steps) / float(max(1, total_steps - warmup_steps))
+            return 0.5 * (1.0 + math.cos(math.pi * progress))
+    return warmup_cosine_decay_lambda
+
+
+def configure_constant_lambda():
+    def constant_lambda(current_step):
+        return 1.0
+    return constant_lambda

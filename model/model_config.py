@@ -9,6 +9,7 @@ SupportedModels = Literal[
     "vit_b",
     "x3d",
     "zero_output_dummy",
+    "clip",
 ]
 
 

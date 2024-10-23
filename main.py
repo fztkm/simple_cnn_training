@@ -34,10 +34,13 @@ def main():
         command_line_args=args,
         dataset_name=args.dataset_name,
     )
+    max_steps = len(data_module.train_dataloader()) * args.num_epochs // args.grad_accum
+
     model_lightning = SimpleLightningModel(
         command_line_args=args,
         n_classes=data_module.n_classes,
-        exp_name=exp_name
+        exp_name=exp_name,
+        warmup_rate=0.1,
     )
 
     callbacks = configure_callbacks()
@@ -72,7 +75,7 @@ def main():
             logger=loggers,
             log_every_n_steps=args.log_interval_steps,
             accumulate_grad_batches=args.grad_accum,
-            limit_train_batches=800,  # only for debug
+            limit_train_batches=150,  # only for debug
             limit_val_batches=20,  # only for debug
             callbacks=callbacks,
             plugins=[TorchSyncBatchNorm()],
